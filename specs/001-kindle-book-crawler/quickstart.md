@@ -10,10 +10,12 @@ The Kindle Book Crawler is a Deno-based CLI tool that collects free Kindle book 
 ## Prerequisites
 
 ### Required
+
 - **Deno 1.40+**: [Install Deno](https://deno.land/#installation)
 - **npx** (for Playwright browser installation): Comes with Node.js/npm
 
 ### System Requirements
+
 - **OS**: Windows, macOS, or Linux
 - **Disk Space**: ~500MB (for Playwright browser binaries)
 - **Network**: Internet access for crawling and robots.txt fetching
@@ -34,6 +36,7 @@ cd kindle
 The project requires `node_modules` for Playwright browser binaries.
 
 **deno.json** (already configured in repo):
+
 ```json
 {
   "nodeModulesDir": "auto",
@@ -82,17 +85,18 @@ Create a `config.json` file with your crawl targets and CSS selectors:
 
 ### Configuration Options
 
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `targets` | array | ✅ Yes | - | List of URLs to crawl with CSS selectors |
-| `delay` | number | No | 2 | Seconds between navigations (min 2) |
-| `timeout` | number | No | 30 | Page operation timeout in seconds |
-| `userAgent` | string | No | `KindleBookCrawler/1.0 (+URL)` | Custom User-Agent header |
-| `outputFile` | string | No | stdout | File path for JSON output |
+| Field        | Type   | Required | Default                        | Description                              |
+| ------------ | ------ | -------- | ------------------------------ | ---------------------------------------- |
+| `targets`    | array  | ✅ Yes   | -                              | List of URLs to crawl with CSS selectors |
+| `delay`      | number | No       | 2                              | Seconds between navigations (min 2)      |
+| `timeout`    | number | No       | 30                             | Page operation timeout in seconds        |
+| `userAgent`  | string | No       | `KindleBookCrawler/1.0 (+URL)` | Custom User-Agent header                 |
+| `outputFile` | string | No       | stdout                         | File path for JSON output                |
 
 ### Target Configuration
 
 Each target requires:
+
 - `url`: Full HTTP/HTTPS URL (non-Amazon domain)
 - `selectors.title`: CSS selector for book title (required)
 - `selectors.author`: CSS selector for author name (optional)
@@ -149,13 +153,13 @@ This is equivalent to the full command above with all permissions.
 
 Deno requires explicit permissions for security. Here's what each permission does:
 
-| Permission | Why Required |
-|------------|--------------|
-| `--allow-read` | Read `config.json`, browser binaries, `node_modules` |
+| Permission      | Why Required                                                 |
+| --------------- | ------------------------------------------------------------ |
+| `--allow-read`  | Read `config.json`, browser binaries, `node_modules`         |
 | `--allow-write` | Write output file (if `outputFile` specified), browser cache |
-| `--allow-net` | Fetch robots.txt, navigate to crawl targets |
-| `--allow-env` | Playwright reads environment variables (HOME, PATH, etc.) |
-| `--allow-run` | Spawn Chromium browser process (Playwright requirement) |
+| `--allow-net`   | Fetch robots.txt, navigate to crawl targets                  |
+| `--allow-env`   | Playwright reads environment variables (HOME, PATH, etc.)    |
+| `--allow-run`   | Spawn Chromium browser process (Playwright requirement)      |
 
 **Security Note**: `--allow-run` effectively bypasses Deno's sandbox for spawned processes. Only run configurations you trust.
 
@@ -166,6 +170,7 @@ Deno requires explicit permissions for security. Here's what each permission doe
 ### 1. Create Config
 
 **config.json**:
+
 ```json
 {
   "targets": [
@@ -192,6 +197,7 @@ deno task crawl config.json
 ### 3. Check Output
 
 **kindle-books.json**:
+
 ```json
 {
   "books": [
@@ -221,6 +227,7 @@ deno task crawl config.json
 **Error**: `browserType.launch: Executable doesn't exist at ...`
 
 **Solution**:
+
 ```bash
 deno run --allow-run=npx --allow-read --allow-write --allow-net --allow-env npm:playwright install chromium
 ```
@@ -278,6 +285,7 @@ See [.specify/memory/constitution.md](../../.specify/memory/constitution.md) for
 ## Support
 
 For issues, feature requests, or questions:
+
 - **GitHub Issues**: https://github.com/USER/kindle/issues
 - **Documentation**: [specs/001-kindle-book-crawler/](.)
 

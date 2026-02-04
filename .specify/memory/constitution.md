@@ -80,7 +80,8 @@ The project MUST target Deno as the runtime environment, not Node.js:
 
 **Rationale**: Deno provides modern security primitives (granular permissions), native TypeScript, and a simpler dependency model. Using Node.js patterns defeats these advantages and creates unnecessary complexity.
 
-### VI. 
+### VI.
+
 ### V. Maintainability Over Speed
 
 Code structure and safety MUST take precedence over performance optimizations:

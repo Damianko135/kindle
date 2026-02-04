@@ -15,11 +15,13 @@ This document consolidates research findings for resolving technical unknowns id
 **Question**: Can Playwright be used in Deno via npm: specifier, and what is the recommended integration approach?
 
 #### Decision
+
 **Use Playwright via npm: specifier with local node_modules**
 
 Playwright is compatible with Deno 1.40+ through the `npm:playwright` specifier. However, it requires specific setup due to browser binary management requirements.
 
 #### Rationale
+
 - Deno's npm compatibility layer supports Playwright successfully
 - Playwright is actively maintained and battle-tested for browser automation
 - Deno team has fixed multiple Playwright-specific bugs, indicating ongoing support
@@ -28,11 +30,13 @@ Playwright is compatible with Deno 1.40+ through the `npm:playwright` specifier.
 #### Integration Details
 
 **Import Pattern:**
+
 ```typescript
 import { chromium } from "npm:playwright@1.40.0";
 ```
 
 **Required Deno Configuration:**
+
 ```json
 {
   "nodeModulesDir": "auto"
@@ -40,6 +44,7 @@ import { chromium } from "npm:playwright@1.40.0";
 ```
 
 **Required Permissions:**
+
 - `--allow-read` - Browser binaries, config files, node_modules
 - `--allow-write` - Browser data, cache, temp files
 - `--allow-net` - Download binaries, network requests
@@ -48,12 +53,14 @@ import { chromium } from "npm:playwright@1.40.0";
 - `--node-modules-dir=auto` - Required for browser binary installation
 
 **Setup Steps:**
+
 1. Add `"nodeModulesDir": "auto"` to `deno.json`
 2. Run `deno run --allow-run=npx --allow-read --allow-write --allow-net --allow-env npm:playwright install` (one-time)
 3. Import via `npm:playwright@1.40.0` in code
 4. Run crawler with all required permissions
 
 #### Limitations
+
 - **Browser binaries**: Requires separate `playwright install` step (cannot auto-install on first run)
 - **node_modules required**: Unlike most npm packages, Playwright needs local `node_modules` for browser binaries
 - **Security trade-off**: `--allow-run` permission allows spawned processes unrestricted access
@@ -61,6 +68,7 @@ import { chromium } from "npm:playwright@1.40.0";
 - **Platform-specific quirks**: Windows has had specific subprocess issues (fixed in recent Deno versions)
 
 #### Alternatives Considered
+
 - **Deno-native browser automation**: No mature alternatives exist (puppeteer-deno archived, no active projects)
 - **Web-native CDP**: Too low-level, would require significant implementation effort
 - **Custom solution**: Not practical for browser automation complexity
@@ -72,11 +80,13 @@ import { chromium } from "npm:playwright@1.40.0";
 **Question**: What Deno-compatible library should be used for parsing and enforcing robots.txt rules?
 
 #### Decision
+
 **Use npm:robots-parser@3.0.1 via npm: specifier**
 
 The `robots-parser` npm package is the recommended solution for robots.txt parsing in this Deno project.
 
 #### Rationale
+
 - **Proven maturity**: 2M+ weekly npm downloads, actively maintained
 - **Standards-compliant**: Implements RFC 9309 (robots.txt specification)
 - **Deno-compatible**: Uses modern Web APIs (URL object), no Node.js-specific dependencies
@@ -87,19 +97,22 @@ The `robots-parser` npm package is the recommended solution for robots.txt parsi
 #### Implementation Details
 
 **Import Pattern:**
+
 ```typescript
 import robotsParser from "npm:robots-parser@3.0.1";
 ```
 
 **Core API:**
+
 ```typescript
 const robots = robotsParser(robotsTxtUrl, robotsTxtContent);
-robots.isAllowed(targetUrl, userAgent);  // Returns boolean
-robots.getCrawlDelay(userAgent);         // Returns number or undefined
-robots.getSitemaps();                    // Returns string[]
+robots.isAllowed(targetUrl, userAgent); // Returns boolean
+robots.getCrawlDelay(userAgent); // Returns number or undefined
+robots.getSitemaps(); // Returns string[]
 ```
 
 **Key Features:**
+
 - **User-agent matching**: Case-insensitive, supports wildcards (`googlebot*`)
 - **Rule precedence**: Most specific (longest matching) rule wins; on conflicts, least restrictive applies
 - **Wildcards**: `*` = 0+ characters, `$` = end of URL (e.g., `/*.php$` matches only URLs ending in `.php`)
@@ -107,17 +120,20 @@ robots.getSitemaps();                    // Returns string[]
 - **Error handling**: Gracefully handles malformed robots.txt (ignores invalid lines)
 
 **Constitution-Aligned Behavior:**
+
 ```typescript
 // Fetch robots.txt
 const response = await fetch(`${domain}/robots.txt`, {
-  headers: { "User-Agent": "KindleBookCrawler/1.0 (+PROJECT_URL)" }
+  headers: { "User-Agent": "KindleBookCrawler/1.0 (+PROJECT_URL)" },
 });
 
 // Fail-safe approach per Constitution Principle I
 if (!response.ok) {
   // 4xx/5xx: Disallow domain (fail-safe, not per spec which allows on 404)
-  console.error(`robots.txt unavailable (${response.status}): disallowing domain`);
-  return false;  // Skip all URLs for this domain
+  console.error(
+    `robots.txt unavailable (${response.status}): disallowing domain`,
+  );
+  return false; // Skip all URLs for this domain
 }
 
 const robotsTxt = await response.text();
@@ -131,12 +147,14 @@ if (!robots.isAllowed(targetUrl, userAgent)) {
 ```
 
 **Caching Strategy:**
+
 - Cache parsed `robots.txt` per domain in memory
 - 24-hour TTL per Google's recommendations
 - Re-fetch on cache miss or expiry
 - No persistent storage (in-memory only for crawler session)
 
 #### Edge Cases Supported
+
 - Partial malformed files (ignore invalid lines, parse valid ones)
 - Missing robots.txt → Constitution requires DISALLOW (fail-safe) vs spec allows (permissive)
 - Relative vs absolute URLs (library handles both)
@@ -144,6 +162,7 @@ if (!robots.isAllowed(targetUrl, userAgent)) {
 - Conflicting Allow/Disallow rules for same path
 
 #### Alternatives Considered
+
 1. **Deno-native libraries (deno.land/x, JSR)**: No mature robots.txt parsers found
 2. **Custom implementation**: Would violate Constitution Principle VI (Maintainability over Speed) - significant effort to handle edge cases correctly, maintenance burden
 3. **Other npm packages** (`robots-txt-parse`, `robots-txt-guard`): Less mature, fewer downloads, lacking TypeScript support
@@ -153,6 +172,7 @@ if (!robots.isAllowed(targetUrl, userAgent)) {
 ## Summary of Technical Decisions
 
 ### Dependencies Added
+
 1. **Playwright** (`npm:playwright@1.40.0`) - Browser automation
    - Requires: `nodeModulesDir: auto` in `deno.json`
    - Setup: `npx playwright install` (one-time)
@@ -165,6 +185,7 @@ if (!robots.isAllowed(targetUrl, userAgent)) {
 ### Configuration Requirements
 
 **deno.json:**
+
 ```json
 {
   "nodeModulesDir": "auto",
@@ -179,6 +200,7 @@ if (!robots.isAllowed(targetUrl, userAgent)) {
 ```
 
 **Permissions Summary:**
+
 - `--allow-read`: Config file, browser binaries, node_modules
 - `--allow-write`: Optional file output, browser cache/data
 - `--allow-net`: robots.txt fetching, page navigation
@@ -197,10 +219,12 @@ All decisions align with project constitution:
 - **Principle VI (Maintainability)**: Mature, well-documented libraries chosen over custom implementations
 
 ### Open Questions Resolved
+
 ✅ **Playwright Deno compatibility**: Confirmed working via npm: specifier with node_modules setup  
 ✅ **robots.txt parser library**: Selected npm:robots-parser@3.0.1 as best option
 
 ### Next Steps (Phase 1)
+
 1. Generate `data-model.md` with TypeScript interfaces for entities
 2. Create `quickstart.md` with setup instructions (including Playwright install step)
 3. Update agent context with new dependencies

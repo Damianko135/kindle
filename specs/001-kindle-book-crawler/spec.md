@@ -14,8 +14,12 @@
 - Q: What format should the User-Agent header use to identify the crawler? → A: `KindleBookCrawler/1.0 (+https://github.com/USER/kindle)` (standard format with contact)
 - Q: Where should the crawler write its JSON output? → A: Configurable: stdout by default, optional file path in config
 - Q: What timeout should apply to page navigation and data extraction? → A: 30 seconds per page
+- Q: When the crawler encounters a page with 0 book listings (empty result), what should the system do? → A: Log informational message, mark as successful crawl with 0 books extracted, continue to next URL
+- Q: When the same book appears on multiple crawled pages, what should the crawler do? → A: Include all instances (no deduplication)
+- Q: When the crawler encounters partially malformed robots.txt (e.g., syntax errors but contains some valid Disallow rules), how should it be handled? → A: Treat as unavailable, skip entire domain (fail-safe approach)
+- Q: For test tasks (MVP validation, batch crawling test, failure scenarios test), what specific pass/fail criteria should be used? → A: JSON schema validation + log content verification
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Crawl Single Website for Free Kindle Books (Priority: P1)
 
@@ -70,21 +74,21 @@ The crawler encounters various failure scenarios (network errors, missing data, 
 
 ### Edge Cases
 
-- What happens when robots.txt is partially malformed but includes a Disallow rule?
-- How does the system handle a page with 0 book listings (empty result)?
-- What happens when the same book appears on multiple crawled pages?
+- **Partially malformed robots.txt**: When robots.txt contains syntax errors or is partially malformed (e.g., some valid rules mixed with malformed lines), the system treats it as unavailable and skips the entire domain. This fail-safe approach aligns with Constitutional Principle I (Legal and Ethical Scraping) - when robots.txt integrity is uncertain, refuse to crawl. The system logs the malformation reason and marks all URLs from that domain as skipped.
+- **Page with 0 book listings (empty result)**: The system logs an informational message (e.g., "No books found on page"), marks the URL as successfully crawled with 0 books extracted, includes it in the summary statistics as a successful crawl, and continues processing the next URL. This is not treated as an error because the page may legitimately have no free books available at that time.
+- **Same book appears on multiple crawled pages**: The system includes all instances in the output without deduplication. Each book appears once per page it was found on, with separate BookPromotion entries having different sourceUrl values but potentially identical title/author/amazonProductUrl. Users can deduplicate the JSON output themselves if needed. This approach prioritizes simplicity and transparency over automatic deduplication logic.
 - How does the system handle extremely large pages (1000+ books on one page)?
 - What happens when a domain's robots.txt is valid but returns HTTP 403 on the actual page?
 - How does the system handle redirects (301/302) to Amazon domains?
 - What happens when the Amazon product URL is relative instead of absolute?
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
 - **FR-001**: System MUST fetch and parse robots.txt using Deno's native fetch API before attempting to crawl any URL
 - **FR-002**: System MUST refuse to crawl any URL if robots.txt is unavailable, unreachable, or explicitly disallows access
-- **FR-003**: System MUST reject all URLs pointing to Amazon domains (amazon.com, amazon.*, a.co, amzn.*) without navigation
+- **FR-003**: System MUST reject all URLs pointing to Amazon domains (amazon.com, amazon._, a.co, amzn._) without navigation
 - **FR-004**: System MUST extract book title, author name (if available), source page URL, and Amazon product URL using CSS selectors specified in the configuration file
 - **FR-005**: System MUST store Amazon product URLs in output without opening, validating, or navigating to them
 - **FR-006**: System MUST crawl pages sequentially (single-page concurrency) with configurable delays between navigations (default: 2 seconds minimum)
@@ -103,7 +107,6 @@ The crawler encounters various failure scenarios (network errors, missing data, 
 
 - **Book Promotion**: Represents a free Kindle book offer discovered on a third-party site
   - Attributes: title (string, required), author (string, optional), source URL (string, required), Amazon product URL (string, required), crawl timestamp (datetime, required)
-  
 - **Crawl Target**: Represents a URL to be crawled
   - Attributes: URL (string, required), domain (string, required), robots.txt status (allowed/disallowed/unavailable), crawl status (pending/success/skipped/failed), failure reason (string, optional)
 
@@ -115,8 +118,7 @@ The crawler encounters various failure scenarios (network errors, missing data, 
 - **Target Configuration**: Represents a crawl target with selectors
   - Attributes: url (string, required), selectors (object with title/author/amazonLink CSS selectors, required), domain (string, derived from URL)
 
-
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 
@@ -128,7 +130,7 @@ The crawler encounters various failure scenarios (network errors, missing data, 
 - **SC-006**: JSON output from a successful crawl is parseable and contains all required fields (title, source URL, Amazon link) for 100% of extracted books
 - **SC-007**: Crawler completes execution and outputs results even when 50% of input URLs are disallowed by robots.txt or fail
 
-## Assumptions *(optional)*
+## Assumptions _(optional)_
 
 - Third-party websites have HTML structures that can be described with CSS selectors
 - Book titles and Amazon links are always present in the HTML; author names may be optional
@@ -141,7 +143,7 @@ The crawler encounters various failure scenarios (network errors, missing data, 
 - Default timeout for page operations is 30 seconds but can be configured in the configuration file
 - Default User-Agent follows RFC 7231 format with project URL (configurable in config file)
 
-## Out of Scope *(optional)*
+## Out of Scope _(optional)_
 
 - Price verification on Amazon (Amazon URLs are stored but never accessed)
 - CAPTCHA solving or anti-bot circumvention techniques

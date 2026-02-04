@@ -23,31 +23,36 @@ Build a Deno-based web crawler using Playwright that collects free Kindle book p
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
 ### Principle I: Legal and Ethical Scraping
+
 - ✅ **PASS**: robots.txt fetching mandatory before navigation (FR-001, FR-002)
 - ✅ **PASS**: Crawler refuses to proceed if robots.txt disallows access (FR-002)
 - ✅ **PASS**: Fail-fast approach with clear error messages (FR-007, FR-010)
 - ✅ **PASS**: No bypass or circumvention mechanisms planned
 
 ### Principle II: Amazon ToS Boundary
+
 - ✅ **PASS**: Amazon domains explicitly blocked without navigation (FR-003)
 - ✅ **PASS**: Amazon links stored but never opened/validated (FR-005)
 - ✅ **PASS**: Domain blocklist enforces this at code level (hardcoded guardrail)
 
 ### Principle III: Transparency Over Stealth
+
 - ✅ **PASS**: Consistent User-Agent header specified (FR-012: `KindleBookCrawler/VERSION (+PROJECT_URL)`)
 - ✅ **PASS**: No fingerprint evasion, stealth plugins, or agent rotation planned
 - ✅ **PASS**: Standard Playwright usage without stealth modifications
 
 ### Principle IV: Conservative Crawling
+
 - ✅ **PASS**: Single-page concurrency enforced (FR-006: sequential only)
 - ✅ **PASS**: Explicit delays between navigations (FR-006: default 2s, configurable)
 - ✅ **PASS**: Immediate stop on HTTP 403, 429, CAPTCHA (FR-007)
 - ✅ **PASS**: No retry logic, fail-fast approach (FR-008)
 
 ### Principle V: Deno-First Implementation
+
 - ✅ **PASS**: Deno 1.40+ targeted (assumption documented in spec)
 - ✅ **PASS**: Deno native APIs specified (FR-011: fetch, filesystem, permissions)
 - ✅ **PASS**: No Node.js modules or CommonJS patterns planned
@@ -55,12 +60,14 @@ Build a Deno-based web crawler using Playwright that collects free Kindle book p
 - ⚠️ **NEEDS CLARIFICATION**: robots.txt parser library selection (must be Deno-compatible)
 
 ### Principle VI: Maintainability Over Speed
+
 - ✅ **PASS**: Clear separation of concerns required (config, robots.txt, navigation, extraction)
 - ✅ **PASS**: Guardrails planned (domain blocklist, pre-flight checks, configuration validation)
 - ✅ **PASS**: Explicit validation gates before network requests (robots.txt check, domain validation)
 - ✅ **PASS**: Fail-safe defaults (refuse to proceed when uncertain)
 
 **Overall Status**: ✅ **GATES PASSED** - 2 clarifications needed for Phase 0 research:
+
 1. Verify Playwright for Deno compatibility and integration approach
 2. Identify/select Deno-compatible robots.txt parser library
 
@@ -70,9 +77,10 @@ Build a Deno-based web crawler using Playwright that collects free Kindle book p
 
 ### Post-Design Re-Evaluation
 
-*Re-checked after Phase 1 design (research, data model, contracts completed)*
+_Re-checked after Phase 1 design (research, data model, contracts completed)_
 
 ### Principle V: Deno-First Implementation (Re-check)
+
 - ✅ **RESOLVED**: Playwright confirmed working via npm: specifier with `nodeModulesDir: auto`
 - ✅ **RESOLVED**: robots-parser selected (`npm:robots-parser@3.0.1`) - Deno-compatible via npm: specifier
 - ✅ **PASS**: All dependencies use npm: specifiers as documented in constitution
@@ -141,7 +149,7 @@ deno.json                 # Deno configuration with dependencies
 
 > **Fill ONLY if Constitution Check has violations that must be justified**
 
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+| Violation                  | Why Needed         | Simpler Alternative Rejected Because |
+| -------------------------- | ------------------ | ------------------------------------ |
+| [e.g., 4th project]        | [current need]     | [why 3 projects insufficient]        |
+| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient]  |
