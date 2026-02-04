@@ -1,0 +1,104 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/USER/kindle/config.schema.json",
+  "title": "Kindle Book Crawler Configuration",
+  "description": "Configuration file schema for the Kindle Book Crawler (config.json)",
+  "type": "object",
+  "required": ["targets"],
+  "properties": {
+    "targets": {
+      "type": "array",
+      "description": "List of URLs to crawl with their CSS selectors",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/definitions/target"
+      }
+    },
+    "delay": {
+      "type": "number",
+      "description": "Delay in seconds between page navigations (minimum 2 per constitution)",
+      "minimum": 2,
+      "default": 2
+    },
+    "timeout": {
+      "type": "number",
+      "description": "Timeout in seconds for page operations",
+      "minimum": 1,
+      "default": 30
+    },
+    "userAgent": {
+      "type": "string",
+      "description": "Custom User-Agent header (must follow RFC 7231 format)",
+      "pattern": "^[^/]+/[\\d.]+ \\(\\+https?://.+\\)$",
+      "default": "KindleBookCrawler/1.0 (+https://github.com/USER/kindle)"
+    },
+    "outputFile": {
+      "type": "string",
+      "description": "Optional file path for JSON output (omit to write to stdout)"
+    }
+  },
+  "definitions": {
+    "target": {
+      "type": "object",
+      "description": "A single crawl target with URL and selectors",
+      "required": ["url", "selectors"],
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "Full URL to crawl (must be HTTP/HTTPS, non-Amazon domain)",
+          "format": "uri",
+          "pattern": "^https?://"
+        },
+        "selectors": {
+          "$ref": "#/definitions/selectors"
+        }
+      }
+    },
+    "selectors": {
+      "type": "object",
+      "description": "CSS selectors for extracting book data",
+      "required": ["title", "amazonLink"],
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "CSS selector for book title (required)",
+          "minLength": 1
+        },
+        "author": {
+          "type": "string",
+          "description": "CSS selector for author name (optional)",
+          "minLength": 1
+        },
+        "amazonLink": {
+          "type": "string",
+          "description": "CSS selector for Amazon product link (required)",
+          "minLength": 1
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "targets": [
+        {
+          "url": "https://freekindlebooks.example.com/today",
+          "selectors": {
+            "title": ".book-title",
+            "author": ".book-author",
+            "amazonLink": "a.amazon-link"
+          }
+        },
+        {
+          "url": "https://bookdeals.example.com/kindle-free",
+          "selectors": {
+            "title": "h2.title",
+            "amazonLink": ".buy-link[href*='amazon']"
+          }
+        }
+      ],
+      "delay": 3,
+      "timeout": 30,
+      "outputFile": "results.json"
+    }
+  ]
+}

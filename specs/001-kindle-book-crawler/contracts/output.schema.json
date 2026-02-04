@@ -1,0 +1,132 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/USER/kindle/output.schema.json",
+  "title": "Kindle Book Crawler Output",
+  "description": "JSON output schema for crawl results",
+  "type": "object",
+  "required": ["books", "summary"],
+  "properties": {
+    "books": {
+      "type": "array",
+      "description": "All successfully extracted book promotions",
+      "items": {
+        "$ref": "#/definitions/bookPromotion"
+      }
+    },
+    "summary": {
+      "type": "object",
+      "description": "Summary statistics for the crawl session",
+      "required": ["total", "successful", "skipped", "failed"],
+      "properties": {
+        "total": {
+          "type": "integer",
+          "description": "Total number of URLs processed",
+          "minimum": 0
+        },
+        "successful": {
+          "type": "integer",
+          "description": "Number of URLs successfully crawled",
+          "minimum": 0
+        },
+        "skipped": {
+          "type": "integer",
+          "description": "Number of URLs skipped (robots.txt, Amazon domain, etc.)",
+          "minimum": 0
+        },
+        "failed": {
+          "type": "integer",
+          "description": "Number of URLs that failed (timeout, HTTP error, etc.)",
+          "minimum": 0
+        }
+      }
+    },
+    "errors": {
+      "type": "array",
+      "description": "Optional list of URLs that were skipped or failed with reasons",
+      "items": {
+        "type": "object",
+        "required": ["url", "reason"],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Human-readable explanation of why URL was skipped/failed"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "bookPromotion": {
+      "type": "object",
+      "description": "A free Kindle book promotion discovered on a third-party site",
+      "required": ["title", "sourceUrl", "amazonProductUrl", "crawlTimestamp"],
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Book title",
+          "minLength": 1
+        },
+        "author": {
+          "type": ["string", "null"],
+          "description": "Author name (null if not found)"
+        },
+        "sourceUrl": {
+          "type": "string",
+          "description": "URL where this book was discovered",
+          "format": "uri"
+        },
+        "amazonProductUrl": {
+          "type": "string",
+          "description": "Amazon product link (stored but never visited)",
+          "format": "uri",
+          "pattern": "^https?://(www\\.)?amazon\\."
+        },
+        "crawlTimestamp": {
+          "type": "string",
+          "description": "ISO 8601 timestamp when book was crawled",
+          "format": "date-time"
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "books": [
+        {
+          "title": "The Great Gatsby",
+          "author": "F. Scott Fitzgerald",
+          "sourceUrl": "https://freekindlebooks.example.com/classics",
+          "amazonProductUrl": "https://www.amazon.com/dp/B000FC1GHO",
+          "crawlTimestamp": "2026-02-04T10:30:00.000Z"
+        },
+        {
+          "title": "1984",
+          "author": null,
+          "sourceUrl": "https://bookdeals.example.com/kindle-free",
+          "amazonProductUrl": "https://www.amazon.com/dp/B003JTHWKU",
+          "crawlTimestamp": "2026-02-04T10:30:15.000Z"
+        }
+      ],
+      "summary": {
+        "total": 5,
+        "successful": 3,
+        "skipped": 1,
+        "failed": 1
+      },
+      "errors": [
+        {
+          "url": "https://example.com/books",
+          "reason": "Disallowed by robots.txt"
+        },
+        {
+          "url": "https://another.example.com/deals",
+          "reason": "Navigation timeout after 30 seconds"
+        }
+      ]
+    }
+  ]
+}
